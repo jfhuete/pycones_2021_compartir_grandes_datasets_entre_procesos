@@ -1,0 +1,32 @@
+version: "3.9"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile-app
+    container_name: re_app
+    volumes:
+      - ./src:/src
+      - ../Data:/data
+    environment:
+      - "FILE_SIZE=${FILE_SIZE}"
+    command: ["python", "main.py"]
+    depends_on:
+      - redis
+      - celery
+  redis:
+    container_name: re_redis
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile-celery
+    container_name: re_celery
+    command: ['celery', '-A', 'scheduler.tasks', 'worker', '--loglevel=INFO']
+    volumes:
+      - ./src:/src
+    working_dir: /src
+    depends_on:
+    - redis

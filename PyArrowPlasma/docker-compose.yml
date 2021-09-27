@@ -1,0 +1,46 @@
+version: "3.9"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile-app
+    container_name: pya_app
+    volumes:
+      - ./src:/src
+      - ./sock:/tmp/sock
+      - ../Data:/data
+    environment:
+      - "FILE_SIZE=${FILE_SIZE}"
+    command: ["python", "main.py"]
+    depends_on:
+      - redis
+      - celery
+      - plasma
+  plasma:
+    build:
+      context: .
+      dockerfile: Dockerfile-plasma
+      shm_size: '8.5gb'
+    shm_size: '8.5gb'
+    container_name: pya_plasma
+    volumes:
+      - ./sock:/tmp/sock
+    command: ["plasma_store", "-m", "8000000000", "-s", "/tmp/sock/plasma.sock"]
+  redis:
+    container_name: pya_redis
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile-celery
+    container_name: pya_celery
+    command: ['celery', '-A', 'scheduler.tasks', 'worker', '--loglevel=INFO']
+    volumes:
+      - ./src:/src
+      - ./sock:/tmp/sock
+    working_dir: /src
+    depends_on:
+      - redis
+      - plasma

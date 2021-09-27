@@ -16,9 +16,10 @@ def meassure(func):
         file_size = os.environ.get("FILE_SIZE", "m")
         file_path = f"/data/{file_size}.csv"
 
+        print("Reading dataset")
         df = pd.read_csv(file_path)
         size = round(Path(file_path).stat().st_size / 1024 / 1024 / 1024, 3)
-
+        print("Transferring")
         startTime = time.time()
 
         try:

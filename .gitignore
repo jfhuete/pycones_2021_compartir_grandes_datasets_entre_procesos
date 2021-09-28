@@ -5,6 +5,9 @@ __pycache__
 
 .env
 
-.db
+*.db
+*.lock
+*.hdf5
+*.yaml
 
 .vscode

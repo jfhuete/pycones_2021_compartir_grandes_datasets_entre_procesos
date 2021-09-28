@@ -1,0 +1,6 @@
+celery==5.1.2
+redis==3.5.3
+SQLAlchemy==1.4.23
+vaex==4.5.0
+python-dotenv==0.19.0
+s3fs==2021.9.0

@@ -12,7 +12,7 @@ def transfer(df):
     """
 
     temp_file_path = '/tmp/temp.hdf5'
-    df.export_parquet(to='s3://my-s3-bucket/my_data.parquet', fs_options={'access_key': my_key, 'secret_key': my_secret_key})
+    df.export_hdf5(temp_file_path)
     task = read.delay(temp_file_path)
     task.wait()
 

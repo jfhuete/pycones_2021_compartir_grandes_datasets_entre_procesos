@@ -1,8 +1,10 @@
 import os
+import random
+
+import sh
 
 from dotenv import load_dotenv
 from scheduler.tasks import read
-
 from meassure_wrapper import meassure
 
 
@@ -19,29 +21,45 @@ def transfer(df, size):
 
     load_dotenv()
 
-    access_key = os.getenv("AWS_ACCESS_KEY_ID")
-    secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-    region = os.getenv("AWS_REGION")
     bucket_id = os.getenv("AWS_S3_BUCKET_ID")
+    temp_path = "../tmp"
+    file_path = f"{temp_path}/sample.hdf5"
+    temp_files_prefix = str(random.getrandbits(32))
 
-    # Chunks
-    size_mb = size * 1024
-    n_chunks = int((size_mb // CHUNK_SIZE_MB) + 1) \
-        if (size_mb % CHUNK_SIZE_MB) != 0 else int(size_mb // CHUNK_SIZE_MB)
-    chunk_size = int(df.count()) // n_chunks
-    file_prefix = "sample"
-    file_path = f"s3://{bucket_id}/{file_prefix}.parquet"
+    # Export to hdf5
+    df.export_hdf5(file_path)
 
-    df.export_many(
+    # Split hdf5 file in smaller files
+    sh.split(
+        f"-b{CHUNK_SIZE_MB}M",
         file_path,
-        chunk_size=chunk_size,
-        fs_options={
-            "access_key": access_key,
-            "secret_key": secret_access_key,
-            "region": region
-        }
+        f"{temp_path}{temp_files_prefix}"
     )
-    task = read.delay(file_prefix)
+
+    # Upload files to S3
+    temp_files = list(
+        filter(lambda x: x.find(temp_files_prefix) == 0, os.listdir(temp_path))
+    )
+    processes = []
+    for file in temp_files:
+        processes.append(
+            sh.aws(
+                "s3api",
+                "put-object",
+                "--bucket",
+                bucket_id,
+                "--key",
+                file,
+                "--body",
+                f"{temp_path}/{file}",
+                _bg=True
+            )
+        )
+
+    for process in processes:
+        process.wait()
+
+    task = read.delay(temp_files)
     task.wait()
 
 

@@ -1,4 +1,7 @@
 import os
+
+import sh
+
 from celery import Celery
 from dotenv import load_dotenv
 
@@ -12,12 +15,36 @@ app.config_from_object(scheduler.celeryconfig)
 
 
 @app.task
-def read(file_prefix):
+def read(temp_files):
 
     load_dotenv()
 
     bucket_id = os.getenv("AWS_S3_BUCKET_ID")
+    received_temp_path = "../tmp/received"
 
-    print("Reading df using Vaex s3")
+    rebuilt_temp_file = "sample_received.hdf5"
+    rebuilt_temp_file_path = f"{received_temp_path}/{rebuilt_temp_file}"
 
-    df = vaex.open(f"s3://{bucket_id}/{file_prefix}-**.parquet")
+    # Get splited files from s3
+
+    processes = []
+    for file in temp_files:
+        processes.append(
+            sh.aws(
+                "s3api",
+                "get-object",
+                "--bucket",
+                bucket_id,
+                "--key",
+                file,
+                f"{received_temp_path}/{file}",
+                _bg=True)
+            )
+
+    for process in processes:
+        process.wait()
+
+    temp_files_path = [f"{received_temp_path}/{f}" for f in temp_files]
+    sh.cat(*temp_files_path, _out=f"{received_temp_path}/{rebuilt_temp_file}")
+
+    df = vaex.open(rebuilt_temp_file_path)

@@ -11,5 +11,6 @@ __pycache__
 *.yaml
 
 VaexS3/tmp
+.aws
 
 .vscode

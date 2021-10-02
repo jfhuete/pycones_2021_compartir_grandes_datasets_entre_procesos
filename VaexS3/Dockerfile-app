@@ -1,12 +1,24 @@
 # syntax=docker/dockerfile:1
 FROM python:3.7.12-buster
 
-WORKDIR /src
-
 RUN apt install gcc g++
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+RUN unzip awscliv2.zip
+RUN ./aws/install
+
+WORKDIR /tmp
+RUN curl http://deb.debian.org/debian/pool/main/l/less/less_487.orig.tar.gz --output less_487.orig.tar.gz
+RUN tar xzf less_487.orig.tar.gz
+WORKDIR /tmp/less-487
+RUN ./configure
+RUN make
+RUN make install
+
+WORKDIR /src
 
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 COPY ./src .
+COPY ./.aws /root/.aws
 CMD ["python", "main.py"]

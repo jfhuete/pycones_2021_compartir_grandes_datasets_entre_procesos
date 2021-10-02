@@ -24,7 +24,7 @@ def meassure(func):
         startTime = time.time()
 
         try:
-            func(df, size)
+            func(df)
         except Exception:
             print(traceback.format_exc())
             print(f"====> Transfer failed for the file whose size is {size}Gb")

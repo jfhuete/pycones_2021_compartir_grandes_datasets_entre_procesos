@@ -3,7 +3,6 @@ import random
 
 import sh
 
-from dotenv import load_dotenv
 from scheduler.tasks import read
 from meassure_wrapper import meassure
 
@@ -12,17 +11,15 @@ CHUNK_SIZE_MB = 100
 
 
 @meassure
-def transfer(df, size):
+def transfer(df):
     """
     Function that makes the transfer to the worker
 
     df is passed in the meassure wrapper
     """
 
-    load_dotenv()
-
-    bucket_id = os.getenv("AWS_S3_BUCKET_ID")
-    temp_path = "../tmp"
+    bucket_id = "jfhuete-pycones2021"
+    temp_path = "/tmp"
     file_path = f"{temp_path}/sample.hdf5"
     temp_files_prefix = str(random.getrandbits(32))
 
@@ -33,7 +30,7 @@ def transfer(df, size):
     sh.split(
         f"-b{CHUNK_SIZE_MB}M",
         file_path,
-        f"{temp_path}{temp_files_prefix}"
+        f"{temp_path}/{temp_files_prefix}"
     )
 
     # Upload files to S3

@@ -22,8 +22,9 @@ def transfer(df):
     # Convert the Pandas DataFrame into a PyArrow RecordBatch
     record_batch = pa.RecordBatch.from_pandas(df)
 
-    # Create the Plasma object from the PyArrow RecordBatch. Most of the work here
-    # is done to determine the size of buffer to request from the object store.
+    # Create the Plasma object from the PyArrow RecordBatch. Most of the work
+    # here is done to determine the size of buffer to request from the object
+    # store.
     object_id = plasma.ObjectID(np.random.bytes(20))
     mock_sink = pa.MockOutputStream()
     stream_writer = pa.RecordBatchStreamWriter(mock_sink, record_batch.schema)

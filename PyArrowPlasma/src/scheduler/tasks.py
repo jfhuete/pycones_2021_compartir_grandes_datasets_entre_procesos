@@ -24,4 +24,4 @@ def read(object_id_str):
     reader = pa.RecordBatchStreamReader(buffer)
     record_batch = reader.read_next_batch()
 
-    result = record_batch.to_pandas()
+    record_batch.to_pandas()
